@@ -1,0 +1,485 @@
+openapi: 3.0.3
+info:
+  title: Personal Expense Tracker API
+  version: v1
+  description: API contract for authentication, categories, transactions, and monthly summaries.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          description: Email already exists
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+  /api/v1/categories:
+    post:
+      tags: [Categories]
+      security:
+        - bearerAuth: []
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+    get:
+      tags: [Categories]
+      security:
+        - bearerAuth: []
+      summary: List categories
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paginated categories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryPageResponse'
+  /api/v1/categories/{id}:
+    get:
+      tags: [Categories]
+      security:
+        - bearerAuth: []
+      summary: Get category
+      parameters:
+        - $ref: '#/components/parameters/CategoryIdParam'
+      responses:
+        '200':
+          description: Category found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '404':
+          description: Not found
+    put:
+      tags: [Categories]
+      security:
+        - bearerAuth: []
+      summary: Update category
+      parameters:
+        - $ref: '#/components/parameters/CategoryIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+    delete:
+      tags: [Categories]
+      security:
+        - bearerAuth: []
+      summary: Delete category
+      parameters:
+        - $ref: '#/components/parameters/CategoryIdParam'
+      responses:
+        '204':
+          description: Deleted
+  /api/v1/transactions:
+    post:
+      tags: [Transactions]
+      security:
+        - bearerAuth: []
+      summary: Create transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+    get:
+      tags: [Transactions]
+      security:
+        - bearerAuth: []
+      summary: List transactions with filters
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/EntryType'
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Paginated transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionPageResponse'
+  /api/v1/transactions/{id}:
+    get:
+      tags: [Transactions]
+      security:
+        - bearerAuth: []
+      summary: Get transaction
+      parameters:
+        - $ref: '#/components/parameters/TransactionIdParam'
+      responses:
+        '200':
+          description: Transaction found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '404':
+          description: Not found
+    put:
+      tags: [Transactions]
+      security:
+        - bearerAuth: []
+      summary: Update transaction
+      parameters:
+        - $ref: '#/components/parameters/TransactionIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTransactionRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+    delete:
+      tags: [Transactions]
+      security:
+        - bearerAuth: []
+      summary: Delete transaction
+      parameters:
+        - $ref: '#/components/parameters/TransactionIdParam'
+      responses:
+        '204':
+          description: Deleted
+  /api/v1/summaries/monthly:
+    get:
+      tags: [Summaries]
+      security:
+        - bearerAuth: []
+      summary: Get monthly summary
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 2000
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+      responses:
+        '200':
+          description: Summary for month
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlySummaryResponse'
+components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+      example: 0
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+      example: 20
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+      example: transactionDate,desc
+    CategoryIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    TransactionIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiresInSeconds:
+          type: integer
+          format: int64
+    EntryType:
+      type: string
+      enum: [INCOME, EXPENSE]
+    CreateCategoryRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+          maxLength: 60
+        type:
+          $ref: '#/components/schemas/EntryType'
+    UpdateCategoryRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateCategoryRequest'
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/EntryType'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateTransactionRequest:
+      type: object
+      required: [categoryId, type, amount, transactionDate]
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/EntryType'
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+        description:
+          type: string
+          maxLength: 500
+        transactionDate:
+          type: string
+          format: date
+    UpdateTransactionRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateTransactionRequest'
+    TransactionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        categoryId:
+          type: integer
+          format: int64
+        categoryName:
+          type: string
+        type:
+          $ref: '#/components/schemas/EntryType'
+        amount:
+          type: number
+          format: decimal
+        description:
+          type: string
+        transactionDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CategoryTotalItem:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+        categoryName:
+          type: string
+        total:
+          type: number
+          format: decimal
+        percentage:
+          type: number
+          format: decimal
+    MonthlySummaryResponse:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        incomeTotal:
+          type: number
+          format: decimal
+        expenseTotal:
+          type: number
+          format: decimal
+        net:
+          type: number
+          format: decimal
+        transactionCount:
+          type: integer
+          format: int64
+        breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryTotalItem'
+    CategoryPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+    TransactionPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
