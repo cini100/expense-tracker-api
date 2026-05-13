@@ -28,7 +28,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-expense_tracker}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-prod}
+      JWT_SECRET: ${JWT_SECRET:-ZmFrZS1kZXYtc2VjcmV0LWZvci1sb2NhbC11c2Utb25seS0xMjM0NTY3ODkw}
     ports:
       - "8080:8080"
 

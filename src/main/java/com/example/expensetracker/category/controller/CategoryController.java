@@ -3,6 +3,7 @@ package com.example.expensetracker.category.controller;
 import com.example.expensetracker.category.dto.CategoryResponse;
 import com.example.expensetracker.category.dto.CreateCategoryRequest;
 import com.example.expensetracker.category.dto.UpdateCategoryRequest;
+import com.example.expensetracker.category.service.CategoryService;
 import com.example.expensetracker.common.web.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -22,29 +23,36 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/categories")
 public class CategoryController {
 
+    private final CategoryService categoryService;
+
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
+
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CreateCategoryRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.create(request));
     }
 
     @GetMapping
     public ResponseEntity<PageResponse<CategoryResponse>> getAll(@PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(categoryService.getAll(pageable));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CategoryResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(categoryService.getById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponse> update(@PathVariable Long id,
                                                    @Valid @RequestBody UpdateCategoryRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(categoryService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        categoryService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

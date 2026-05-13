@@ -1,6 +1,6 @@
-# Personal Expense Tracker API (Starter Blueprint)
+# Personal Expense Tracker API
 
-Spring Boot starter skeleton for a portfolio-grade expense tracker API.
+Spring Boot backend API for tracking personal income and expenses.
 
 ## Stack
 - Java 21
@@ -48,10 +48,13 @@ expense-tracker-api
     └── db/migration/V1__init_schema.sql
 ```
 
-## Implemented Blueprint Pieces
+## Implemented Pieces
 - Data model entities: `User`, `Category`, `TransactionRecord`
 - DTO contracts for auth/categories/transactions/summaries
-- Endpoint routing skeletons (all v1 routes)
+- JWT auth with register/login and protected API routes
+- Category CRUD with per-user ownership checks
+- Transaction CRUD with pagination and filtering
+- Monthly summaries with income, expense, net, count, and expense-category breakdown
 - Validation annotations for request payloads
 - Global exception response shape and handler
 - Initial DB schema migration + indexes
@@ -71,16 +74,16 @@ expense-tracker-api
 ./gradlew bootRun
 ```
 
-## Next Implementation Order
-1. JWT provider + authentication service (`register/login`).
-2. Category service + mapper + ownership checks.
-3. Transaction service with filtering/specifications and pagination response mapping.
-4. Monthly summary query service.
-5. Integration tests with Testcontainers.
-6. CI pipeline (test + lint + image build).
+## Test
+
+```bash
+./gradlew test
+```
+
+The test suite includes unit, MVC/security, and PostgreSQL-backed Testcontainers integration tests.
 
 ## Current Status
-Controllers are intentionally scaffold-only and return `501 Not Implemented` so that API shape is fixed before business logic is added.
+Core auth, category, transaction, and summary endpoints are implemented. Run `./gradlew test` for the current test suite.
 
 ## Docker Run
 1. Copy env template:
@@ -88,6 +91,14 @@ Controllers are intentionally scaffold-only and return `501 Not Implemented` so 
 ```bash
 cp .env.example .env
 ```
+
+Generate a new Base64 JWT secret for local use:
+
+```bash
+JWT_SECRET=$(openssl rand -base64 32)
+```
+
+Replace the `JWT_SECRET` value in `.env` with that generated value.
 
 2. Build and start:
 
@@ -99,4 +110,93 @@ docker compose up --build
 
 ```bash
 docker compose down
+```
+
+Run the Docker smoke test after Docker Desktop is running:
+
+```bash
+./scripts/smoke-test.sh
+```
+
+The smoke test requires `curl` and `jq`; it builds the app, starts Postgres, checks health, registers/logs in, creates a category and transaction, lists transactions, and reads the monthly summary.
+
+## API Quickstart
+
+Register:
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+```
+
+Login and store token:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}' \
+  | jq -r '.accessToken')
+```
+
+Create an expense category:
+
+```bash
+CATEGORY_ID=$(curl -s -X POST http://localhost:8080/api/v1/categories \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Food","type":"EXPENSE"}' \
+  | jq -r '.id')
+```
+
+Create a transaction:
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/transactions \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"categoryId\": $CATEGORY_ID,
+    \"type\": \"EXPENSE\",
+    \"amount\": 12.50,
+    \"description\": \"Lunch\",
+    \"transactionDate\": \"2024-04-10\"
+  }"
+```
+
+List filtered transactions:
+
+```bash
+curl -s "http://localhost:8080/api/v1/transactions?type=EXPENSE&from=2024-04-01&to=2024-04-30&page=0&size=20" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Get monthly summary:
+
+```bash
+curl -s "http://localhost:8080/api/v1/summaries/monthly?year=2024&month=4" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Expected auth response shape:
+
+```json
+{
+  "accessToken": "jwt-token",
+  "tokenType": "Bearer",
+  "expiresInSeconds": 3600
+}
+```
+
+Expected error response shape:
+
+```json
+{
+  "timestamp": "2026-04-21T12:00:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Request validation failed",
+  "path": "/api/v1/categories",
+  "fieldErrors": []
+}
 ```

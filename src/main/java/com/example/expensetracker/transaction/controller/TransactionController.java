@@ -5,6 +5,7 @@ import com.example.expensetracker.common.web.PageResponse;
 import com.example.expensetracker.transaction.dto.CreateTransactionRequest;
 import com.example.expensetracker.transaction.dto.TransactionResponse;
 import com.example.expensetracker.transaction.dto.UpdateTransactionRequest;
+import com.example.expensetracker.transaction.service.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
@@ -28,9 +29,15 @@ import java.time.LocalDate;
 @RequestMapping("/api/v1/transactions")
 public class TransactionController {
 
+    private final TransactionService transactionService;
+
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
     @PostMapping
     public ResponseEntity<TransactionResponse> create(@Valid @RequestBody CreateTransactionRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.create(request));
     }
 
     @GetMapping
@@ -41,22 +48,23 @@ public class TransactionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(transactionService.getAll(type, categoryId, from, to, pageable));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TransactionResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(transactionService.getById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<TransactionResponse> update(@PathVariable Long id,
                                                       @Valid @RequestBody UpdateTransactionRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(transactionService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        transactionService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

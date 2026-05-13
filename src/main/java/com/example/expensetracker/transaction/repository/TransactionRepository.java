@@ -4,10 +4,14 @@ import com.example.expensetracker.transaction.entity.TransactionRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface TransactionRepository extends JpaRepository<TransactionRecord, Long>,
         JpaSpecificationExecutor<TransactionRecord> {
 
     Optional<TransactionRecord> findByIdAndUserId(Long id, Long userId);
+
+    List<TransactionRecord> findByUserIdAndTransactionDateBetween(Long userId, LocalDate from, LocalDate to);
 }
