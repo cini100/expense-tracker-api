@@ -10,7 +10,7 @@ Spring Boot backend API for tracking personal income and expenses.
 - JUnit + Testcontainers
 - Docker-ready configuration
 
-## Starter Structure
+## Project Structure
 
 ```text
 expense-tracker-api
